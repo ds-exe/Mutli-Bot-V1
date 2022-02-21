@@ -3,15 +3,13 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 
 const token = config.token;
-const prefix = config.prefix
+const prefix = config.prefix;
 
 unixTime = 0;
 const embedMessage = new Discord.MessageEmbed()
-.setColor("#00FFFF")
-.setTitle("Local time:")
-.setDescription(
-    `<t:0:F>`
-);
+    .setColor("#00FFFF")
+    .setTitle("Local time:")
+    .setDescription(`<t:0:F>`);
 
 client.on("ready", () => {
     console.log("Connected as " + client.user.tag);
@@ -19,17 +17,16 @@ client.on("ready", () => {
     client.user.setActivity("!help", { type: "LISTENING" });
 });
 
-client.on('message', message => {
+client.on("message", (message) => {
     if (message.content.startsWith(prefix)) {
         next(message);
     }
-    
 });
 
-async function next(message) { 
+async function next(message) {
     let targetChannel = client.channels.cache.get(message.channel.id);
     msg = message.content;
-    msg = msg.replace(`${prefix}`,"").toLowerCase();
+    msg = msg.replace(`${prefix}`, "").toLowerCase();
 
     words = msg.replace(/[\|&;\$%@"<>\(\)\+,]/g, "").split(" ");
     command = words[0];
@@ -51,7 +48,7 @@ async function next(message) {
                 if (isNaN(hour) || isNaN(minute)) {
                     break;
                 }
-                if ((hour >= 0 && hour < 24) && (minute >= 0 && minute < 60)) {
+                if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
                     date.setHours(hour);
                     date.setMinutes(minute);
                 }
@@ -76,10 +73,10 @@ async function next(message) {
                 if (isNaN(day) || isNaN(month)) {
                     break;
                 }
-                if ((day > 0 && day < 32) && (month > 0 && month < 13)) {
+                if (day > 0 && day < 32 && month > 0 && month < 13) {
                     date.setDate(day);
-                    date.setMonth(month-1);
-                } 
+                    date.setMonth(month - 1);
+                }
 
                 times = words[2].split(":");
                 hour = parseInt(times[0]);
@@ -87,10 +84,9 @@ async function next(message) {
                 if (isNaN(hour) || isNaN(minute)) {
                     break;
                 }
-                if ((hour >= 0 && hour < 24) && (minute >= 0 && minute < 60)) {
+                if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
                     date.setHours(hour);
                     date.setMinutes(minute);
-
                 }
             } else {
                 targetChannel.send(
@@ -99,26 +95,20 @@ async function next(message) {
                 break;
             }
 
-            unixTime = parseInt(date.getTime()/1000);
+            unixTime = parseInt(date.getTime() / 1000);
             embedMessage.setDescription(`<t:${unixTime}:F>`);
             embedMessage.fields = [];
             embedMessage.addFields({
                 name: `Copy Link:`,
-                value: `\\<t:${unixTime}:F>`
+                value: `\\<t:${unixTime}:F>`,
             });
-            targetChannel.send(
-                embedMessage
-            );
+            targetChannel.send(embedMessage);
             break;
         case "help":
-            targetChannel.send(
-                "Available commands:\n!time\n!date"
-            );
+            targetChannel.send("Available commands:\n!time\n!date");
             break;
         default:
-            targetChannel.send(
-                "Syntax Error"
-            );
+            targetChannel.send("Syntax Error");
             break;
     }
 }
