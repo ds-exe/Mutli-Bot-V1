@@ -4,6 +4,8 @@ const client = new Discord.Client();
 
 const token = config.token;
 const prefix = config.prefix;
+const botOwner = config.owner;
+const botID = config.botID;
 
 unixTime = 0;
 const embedMessage = new Discord.MessageEmbed()
@@ -18,12 +20,13 @@ client.on("ready", () => {
 });
 
 client.on("message", (message) => {
-    if (message.content.startsWith(prefix)) {
+    if (message.content.startsWith(prefix) && message.author.id !== botID) {
         next(message);
     }
 });
 
 async function next(message) {
+    isBotOwner = message.author.id === botOwner;
     let targetChannel = client.channels.cache.get(message.channel.id);
     msg = message.content;
     msg = msg.replace(`${prefix}`, "").toLowerCase();
@@ -104,8 +107,23 @@ async function next(message) {
             });
             targetChannel.send(embedMessage);
             break;
+        case "stop":
+            if (isBotOwner) {
+                message.channel.send("Shutting down").then((m) => {
+                    client.destroy();
+                });
+            } else {
+                targetChannel.send("Error only available to bot owner");
+            }
+            break;
         case "help":
-            targetChannel.send("Available commands:\n!time\n!date");
+            if (isBotOwner) {
+                targetChannel.send(
+                    "Available commands:\n!time\n!date\n!stop\n!restart"
+                );
+            } else {
+                targetChannel.send("Available commands:\n!time\n!date");
+            }
             break;
         default:
             targetChannel.send("Syntax Error");
