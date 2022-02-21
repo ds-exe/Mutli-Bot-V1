@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 var targetChannel = null;
 const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-errored = false;
+var errored = false;
 
 const embedMessage = new Discord.MessageEmbed()
     .setColor("#00FFFF")
