@@ -5,7 +5,13 @@ const client = new Discord.Client();
 const token = config.token;
 const prefix = config.prefix
 
-client.login(token); // Log in token pulled from .gitignore
+unixTime = 0;
+const embedMessage = new Discord.MessageEmbed()
+.setColor("#00FFFF")
+.setTitle("Local time:")
+.setDescription(
+    `<t:0:F>`
+);
 
 client.on("ready", () => {
     console.log("Connected as " + client.user.tag);
@@ -21,19 +27,10 @@ client.on('message', message => {
 });
 
 async function next(message) { 
-    //let targetChannel = client.channels.cache.get(message.d.channel_id);
-    let targetChannel = client.channels.cache.get(message.channel.id)
+    let targetChannel = client.channels.cache.get(message.channel.id);
     msg = message.content;
     msg = msg.replace(`${prefix}`,"").toLowerCase();
-    /*
-    pos = msg.indexOf(" ");
-    if (pos === -1) {
-        command = msg;
-        msg = "";
-    } else {
-        command = msg.slice(0, pos);
-        msg = msg.slice(pos + 1);
-    }*/
+
     words = msg.replace(/[\|&;\$%@"<>\(\)\+,]/g, "").split(" ");
     command = words[0];
 
@@ -46,6 +43,7 @@ async function next(message) {
                 );
                 break;
             }
+            date = new Date();
             if (words[1].indexOf(":") !== -1) {
                 times = words[1].split(":");
                 hour = parseInt(times[0]);
@@ -54,13 +52,8 @@ async function next(message) {
                     break;
                 }
                 if ((hour >= 0 && hour < 24) && (minute >= 0 && minute < 60)) {
-                    date = new Date();
                     date.setHours(hour);
                     date.setMinutes(minute);
-                    targetChannel.send(
-                        `<t:${parseInt(date.getTime()/1000)}:F>` +
-                        `\n\\<t:${parseInt(date.getTime()/1000)}:F>`
-                    );
                 }
             } else if (words[1].indexOf("/") !== -1) {
                 if (words[2] === undefined) {
@@ -68,7 +61,6 @@ async function next(message) {
                 }
 
                 days = words[1].split("/");
-                date = new Date();
                 if (days[2] !== undefined) {
                     year = parseInt(days[2]);
                     if (isNaN(year)) {
@@ -98,16 +90,25 @@ async function next(message) {
                 if ((hour >= 0 && hour < 24) && (minute >= 0 && minute < 60)) {
                     date.setHours(hour);
                     date.setMinutes(minute);
-                    targetChannel.send(
-                        `<t:${parseInt(date.getTime()/1000)}:F>` +
-                        `\n\\<t:${parseInt(date.getTime()/1000)}:F>`
-                    );
+
                 }
             } else {
                 targetChannel.send(
                     "Not following valid formats: \nhh:mm\ndd/mm hh:mm\ndd/mm/yyyy hh:mm"
                 );
+                break;
             }
+
+            unixTime = parseInt(date.getTime()/1000);
+            embedMessage.setDescription(`<t:${unixTime}:F>`);
+            embedMessage.fields = [];
+            embedMessage.addFields({
+                name: `Copy Link:`,
+                value: `\\<t:${unixTime}:F>`
+            });
+            targetChannel.send(
+                embedMessage
+            );
             break;
         case "help":
             targetChannel.send(
