@@ -1,8 +1,8 @@
 const Discord = require("discord.js");
 
-var targetChannel = null;
+let targetChannel = null;
 const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-var errored = false;
+let errored = false;
 
 const embedMessage = new Discord.MessageEmbed()
     .setColor("#00FFFF")
@@ -19,29 +19,19 @@ module.exports = {
             );
             return;
         }
-        date = new Date();
-        if (words[1].indexOf(":") !== -1) {
-            if (words[2] !== undefined && words[2].indexOf("/") !== -1) {
-                parseDate(words[2], date);
-            }
-            parseTime(words[1], date);
-        } else if (words[1].indexOf("/") !== -1) {
-            if (words[2] !== undefined && words[2].indexOf(":") !== -1) {
-                parseTime(words[2], date);
-            } else {
-                date.setHours(0);
-                date.setMinutes(0);
-            }
-            parseDate(words[1], date);
-        } else {
-            error();
-            return;
+        let date = new Date();
+        date.setHours(0);
+        date.setMinutes(0);
+        date.setSeconds(0);
+
+        for (let word of words) {
+            dateModifiers.forEach((mod) => mod(word, date));
         }
         if (errored) {
             error();
             return;
         }
-        unixTime = parseInt(date.getTime() / 1000);
+        let unixTime = parseInt(date.getTime() / 1000);
         embedMessage.setDescription(`<t:${unixTime}:F>`);
         embedMessage.fields = [];
         embedMessage.addFields({
@@ -58,10 +48,27 @@ function error() {
     );
 }
 
+const dateModifiers = [parseDate, parseTime, setTimezone];
+
+function setTimezone(word, date) {
+    if (word.indexOf("-") === -1) {
+        return;
+    }
+    //W.I.P
+    errored = true;
+    return;
+}
+
 function parseTime(word, date) {
-    times = word.split(":");
-    hour = makeInt(times[0]);
-    minute = makeInt(times[1]);
+    if (word.indexOf(":") === -1) {
+        return;
+    }
+    const parts = word.split(":");
+    if (parts.length !== 2) {
+        return;
+    }
+    hour = makeInt(parts[0]);
+    minute = makeInt(parts[1]);
     if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
         date.setHours(hour);
         date.setMinutes(minute);
@@ -72,9 +79,15 @@ function parseTime(word, date) {
 }
 
 function parseDate(word, date) {
-    days = word.split("/");
-    if (days[2] !== undefined) {
-        year = makeInt(days[2]);
+    if (word.indexOf("/") === -1) {
+        return;
+    }
+    const parts = word.split("/");
+    if (parts.length < 2 || parts.length > 3) {
+        return;
+    }
+    if (parts[2] !== undefined) {
+        year = makeInt(parts[2]);
         if (year >= 1970) {
             date.setYear(year);
         } else {
@@ -82,8 +95,8 @@ function parseDate(word, date) {
             return;
         }
     }
-    day = makeInt(days[0]);
-    month = makeInt(days[1]);
+    day = makeInt(parts[0]);
+    month = makeInt(parts[1]);
     year = date.getYear();
     if (
         day >= 1 &&
