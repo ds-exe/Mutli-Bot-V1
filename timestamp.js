@@ -51,24 +51,36 @@ function error() {
 const dateModifiers = [parseDate, parseTime, setTimezone];
 
 function setTimezone(word, date) {
-    if (word.indexOf("-") === -1) {
+    timezoneRegex = /^([+-]{1}[0-9]{1,2})$/;
+    if (word.indexOf("+") === -1 && word.indexOf("-") === -1) {
         return;
     }
-    //W.I.P
-    errored = true;
+    const matches = timezoneRegex.exec(word);
+    if (matches === null) {
+        return; // error does not match
+    }
+    const zone = matches[1];
+    if (date.getHours() - zone < 0) {
+        date.setDate(date.getDate() - 1);
+    }
+    if (date.getHours() - zone > 23) {
+        date.setDate(date.getDate() + 1);
+    }
+    date.setHours(date.getHours() - zone);
     return;
 }
 
 function parseTime(word, date) {
+    timeRegex = /^([0-9]{2}):([0-9]{2})$/;
     if (word.indexOf(":") === -1) {
         return;
     }
-    const parts = word.split(":");
-    if (parts.length !== 2) {
-        return;
+    const matches = timeRegex.exec(word);
+    if (matches === null) {
+        return; // error does not match
     }
-    hour = makeInt(parts[0]);
-    minute = makeInt(parts[1]);
+    const hour = matches[1];
+    const minute = matches[2];
     if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
         date.setHours(hour);
         date.setMinutes(minute);
@@ -79,25 +91,20 @@ function parseTime(word, date) {
 }
 
 function parseDate(word, date) {
+    dateRegex = /^([0-9]{2})\/([0-9]{2})\/?([0-9]{4})?$/;
     if (word.indexOf("/") === -1) {
         return;
     }
-    const parts = word.split("/");
-    if (parts.length < 2 || parts.length > 3) {
-        return;
+    const matches = dateRegex.exec(word);
+    if (matches === null) {
+        return; // error does not match
     }
-    if (parts[2] !== undefined) {
-        year = makeInt(parts[2]);
-        if (year >= 1970) {
-            date.setYear(year);
-        } else {
-            errored = true;
-            return;
-        }
+    const day = matches[1];
+    const month = matches[2];
+    let year = matches[3];
+    if (year !== undefined) {
+        date.setYear(year);
     }
-    day = makeInt(parts[0]);
-    month = makeInt(parts[1]);
-    year = date.getYear();
     if (
         day >= 1 &&
         day <= monthLength(month, year) &&

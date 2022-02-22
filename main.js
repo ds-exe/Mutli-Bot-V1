@@ -21,12 +21,13 @@ client.on("message", (message) => {
 });
 
 async function next(message) {
-    isBotOwner = message.author.id === botOwner;
+    let isBotOwner = message.author.id === botOwner;
     let targetChannel = client.channels.cache.get(message.channel.id);
     msg = message.content;
     msg = msg.replace(`${prefix}`, "").toLowerCase();
 
-    words = msg.replace(/[\|&;\$%@"<>\(\)\+,]/g, "").split(" ");
+    //words = msg.replace(/[\|&;\$%@"<>\(\)\+,]/g, "").split(" ");
+    words = msg.split(" ");
     command = words[0];
 
     switch (command) {
