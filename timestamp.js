@@ -3,6 +3,7 @@ const Discord = require("discord.js");
 let targetChannel = null;
 const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 let errored = false;
+let offset = 0;
 
 const embedMessage = new Discord.MessageEmbed()
     .setColor("#00FFFF")
@@ -13,9 +14,10 @@ module.exports = {
     generateTimestamp: (channel, words) => {
         targetChannel = channel;
         errored = false;
+        offset = 0;
         if (words[1] === undefined || words[1] === "help") {
             targetChannel.send(
-                "Valid inputs: \nTime in form: `hh:mm`\nDate in form: `dd/mm` or `dd/mm/yyyy`"
+                "Valid inputs: \nTime in form: `hh:mm`\nDate in form: `dd/mm` or `dd/mm/yyyy`\nOptional timezone specifier: `UTC{+/-}hh`"
             );
             return;
         }
@@ -31,7 +33,7 @@ module.exports = {
             error();
             return;
         }
-        let unixTime = parseInt(date.getTime() / 1000);
+        let unixTime = parseInt(date.getTime() / 1000) + offset;
         embedMessage.setDescription(`<t:${unixTime}:F>`);
         embedMessage.fields = [];
         embedMessage.addFields({
@@ -44,39 +46,35 @@ module.exports = {
 
 function error() {
     targetChannel.send(
-        "Not following valid formats: \nTime in form: `hh:mm`\nDate in form: `dd/mm` or `dd/mm/yyyy`"
+        "Not following valid formats: \nTime in form: `hh:mm`\nDate in form: `dd/mm` or `dd/mm/yyyy`\nOptional timezone specifier: `UTC{+/-}hh`"
     );
 }
 
 const dateModifiers = [parseDate, parseTime, setTimezone];
 
 function setTimezone(word, date) {
-    timezoneRegex = /^([+-]{1}[0-9]{1,2})$/;
+    timezoneRegex = /^(utc)([+-]{1}[0-9]{1,2})$/;
     if (word.indexOf("+") === -1 && word.indexOf("-") === -1) {
         return;
     }
     const matches = timezoneRegex.exec(word);
     if (matches === null) {
+        errored = true;
         return; // error does not match
     }
-    const zone = matches[1];
-    if (date.getHours() - zone < 0) {
-        date.setDate(date.getDate() - 1);
-    }
-    if (date.getHours() - zone > 23) {
-        date.setDate(date.getDate() + 1);
-    }
-    date.setHours(date.getHours() - zone);
+    const zone = matches[2];
+    offset = -zone * 60 * 60;
     return;
 }
 
 function parseTime(word, date) {
-    timeRegex = /^([0-9]{2}):([0-9]{2})$/;
+    timeRegex = /^([0-9]{1,2}):([0-9]{2})$/;
     if (word.indexOf(":") === -1) {
         return;
     }
     const matches = timeRegex.exec(word);
     if (matches === null) {
+        errored = true;
         return; // error does not match
     }
     const hour = matches[1];
@@ -91,12 +89,13 @@ function parseTime(word, date) {
 }
 
 function parseDate(word, date) {
-    dateRegex = /^([0-9]{2})\/([0-9]{2})\/?([0-9]{4})?$/;
+    dateRegex = /^([0-9]{1,2})\/([0-9]{1,2})\/?([0-9]{4})?$/;
     if (word.indexOf("/") === -1) {
         return;
     }
     const matches = dateRegex.exec(word);
     if (matches === null) {
+        errored = true;
         return; // error does not match
     }
     const day = matches[1];
@@ -117,17 +116,6 @@ function parseDate(word, date) {
         errored = true;
         return;
     }
-}
-
-function makeInt(val) {
-    out = parseInt(val);
-    if (isNaN(out)) {
-        out = -1;
-    }
-    if (out.toString() !== val && "0" + out.toString() !== val) {
-        out = -1;
-    }
-    return out;
 }
 
 function monthLength(month, year) {
